@@ -209,6 +209,29 @@ function webform_registration_submit($form, &$form_state) {
     ))
     ->condition('sid', $form_state['values']['details']['sid'])
     ->execute();
+
+  // Redact the passwords.
+  $password_field_key = $form['#node']->webform_registration['pass'];
+  $confirm_password_field_key = $form['#node']->webform_registration['pass_confirm'];
+
+  $components = $form['#node']->webform['components'];
+
+  foreach($components as $each_component) {
+    if ($each_component['form_key'] == $password_field_key) {
+      $password_field_cid = $each_component['cid'];
+    }
+    elseif ($each_component['form_key'] == $confirm_password_field_key) {
+      $confirm_password_field_cid = $each_component['cid'];
+    }
+  }
+
+  db_update('webform_submitted_data')
+    ->fields(array(
+      'data' => '[REDACTED]',
+    ))
+    ->condition('sid', $form_state['values']['details']['sid'])
+    ->condition('cid', array($password_field_cid, $confirm_password_field_cid), 'IN')
+    ->execute();
 }
 
 /**
